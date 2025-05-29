@@ -1,8 +1,16 @@
 import { Elysia, t } from "elysia";
 import { Posicion } from '@prisma/client';
+import { cors } from "@elysiajs/cors";
 import { createPlayer, getPlayers, updatePlayer, deletePlayer } from 'internal/players';
 
 const app = new Elysia()
+  .use(cors({ // <--- USE THE CORS PLUGIN
+    origin: 'http://localhost:3000', // Allow requests from your frontend's origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // Headers your frontend might send
+    credentials: true, // If your frontend needs to send cookies or use authorization headers
+    preflight: true, // Enable preflight requests (important for 'complex' requests like PUT/DELETE or with custom headers)
+  }))
   .group("/players", (app) => {
     return app
       .get("/", async ({ set }) => {
