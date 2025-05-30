@@ -6,7 +6,7 @@ import { createPlayer, getPlayers, updatePlayer, deletePlayer } from 'internal/p
 const app = new Elysia()
   .use(cors({ // <--- USE THE CORS PLUGIN
     origin: 'http://localhost:3000', // Allow requests from your frontend's origin
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Allowed HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'], // Headers your frontend might send
     credentials: true, // If your frontend needs to send cookies or use authorization headers
     preflight: true, // Enable preflight requests (important for 'complex' requests like PUT/DELETE or with custom headers)
@@ -79,6 +79,38 @@ const app = new Elysia()
           }),
         }
       )
+      .patch(
+      '/:id',
+      async ({ params, body, set }) => {
+        try {
+          const id = Number(params.id);
+          // Aquí body es un Partial, es decir, puede tener solo algunos campos
+          const updatedPlayer = await updatePlayer(id, body);
+          return updatedPlayer;
+        } catch (error: any) {
+          console.error(`Error patching player with ID ${params.id}:`, error);
+          if (error.message.includes('Record to update not found')) {
+            set.status = 404;
+            return { message: 'Player not found' };
+          }
+          set.status = 500;
+          return { message: 'Failed to update player' };
+        }
+      },
+      {
+        params: t.Object({
+          id: t.Numeric(),
+        }),
+        body: t.Partial(
+          t.Object({
+            nombre: t.String(),
+            posicion: t.Enum(Posicion),
+            edad: t.Number(),
+            nacionalidad: t.String(),
+          })
+        ),
+      }
+    )
   })
   .listen(3001);
 
